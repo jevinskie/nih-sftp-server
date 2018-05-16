@@ -1,5 +1,4 @@
-CFLAGS = -Ofast -flto -ffunction-sections -fdata-sections
-LDFLAGS = -Ofast -flto -Wl,-dead_strip
+CFLAGS = -O0 -g
 
 TARGETS = nih-sftp-server nih-sftp-server.o
 

@@ -41,7 +41,8 @@ realpath() is broken and sftp_realpath will return unsupported
 _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 */
 #define _XOPEN_SOURCE 700
-#define _BSD_SOURCE
+//#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 /* GCC folks may prefer to #define _DEFAULT_SOURCE but this is not obviously POSIX compliant */
 
 /* C library */
@@ -124,8 +125,8 @@ _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 #define PERM_MASK 0777
 /* Handles are represented as SSH strings; MAX_HANDLE_DIGITS must enable the printing of
 MAX_HANDLES in that many digits */
-#define MAX_HANDLES 99
-#define MAX_HANDLE_DIGITS 2
+#define MAX_HANDLES 99999
+#define MAX_HANDLE_DIGITS 5
 
 /* Utility macros */
 #define STR(x) #x
