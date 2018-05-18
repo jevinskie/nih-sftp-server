@@ -42,7 +42,11 @@ _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 */
 #define _XOPEN_SOURCE 700
 //#define _BSD_SOURCE
+#ifdef __APPLE__
+#define _DARWIN_C_SOURCE
+#else
 #define _DEFAULT_SOURCE
+#endif
 /* GCC folks may prefer to #define _DEFAULT_SOURCE but this is not obviously POSIX compliant */
 
 /* C library */
