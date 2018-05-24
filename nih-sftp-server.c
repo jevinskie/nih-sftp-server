@@ -123,7 +123,7 @@ _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 #define SSH_FXF_EXCL            0x00000020
 
 /* Derived from SFTP specification */
-#define MAX_ATTRS_BYTES 32
+#define MAX_ATTRS_BYTES 1024
 #define SFTP_PROTOCOL_VERSION 3
 
 /* Defaults */
@@ -852,13 +852,9 @@ static void sftp_opendir(void)
     put_status(id, status);
 }
 
-static char *get_longname(const struct stat *st, const struct dirent *dir_entry, const fxp_handle_t *p_handle)
+static char *get_longname(const struct stat *st, const struct dirent *dir_entry)
 {
-    (void)st;
-    (void)dir_entry;
-    (void)p_handle;
     char *buf = calloc(1, 4096);
-    char *p = buf;
     
     char mode_str[11] = { '\0' };
     my_strmode(st->st_mode, mode_str);
@@ -875,13 +871,12 @@ static char *get_longname(const struct stat *st, const struct dirent *dir_entry,
 
     struct tm *t = gmtime(&st->st_mtime);
 
-
-    snprintf(buf, 4096, "%s\t%d\t%s\t%s\t%lu\t%04d-%02u-%02u %02u:%02u:%02u\t%s",
+    // snprintf(buf, 4096, "%s\t%d\t%s\t%s\t%lu\t%04d-%02u-%02u %02u:%02u\t%s",
+    snprintf(buf, 4096, "%s %d %s %s %lu %04d-%02u-%02u %02u:%02u %s",
         mode_str, num_links, usr->pw_name, grp->gr_name, (unsigned long)sz,
-        1900 + t->tm_year, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
-        dir_entry->d_name);
-
-    fprintf(stderr, "p: %p buf: %p buf: '%s'\n", (void *)p, (void *)buf, buf);
+        1900 + t->tm_year, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min,
+        dir_entry->d_name
+    );
 
     return buf;
 }
@@ -928,7 +923,7 @@ static void sftp_readdir(void)
             {
                 put_cstring(p_entry->d_name);
                 // make longname here
-                char *longname = get_longname(&st, p_entry, p_handle);
+                char *longname = get_longname(&st, p_entry);
                 put_cstring(longname);
                 free(longname);
                 stat_to_attr(&st, &attr);
