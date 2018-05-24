@@ -68,6 +68,7 @@ _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 #include <time.h>
 
 #include "nih-sftp-server.h"
+#include "strmode.h"
 
 /* draft-ietf-secsh-filexfer-02 */
 #define SSH_FXP_INIT                1
