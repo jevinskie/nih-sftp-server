@@ -852,10 +852,8 @@ static void sftp_opendir(void)
     put_status(id, status);
 }
 
-static char *get_longname(const struct stat *st, const struct dirent *dir_entry)
-{
-    char *buf = calloc(1, 4096);
-    
+static char *get_longname(char *str, const struct stat *st, const struct dirent *dir_entry)
+{    
     char mode_str[11] = { '\0' };
     my_strmode(st->st_mode, mode_str);
 
@@ -871,14 +869,14 @@ static char *get_longname(const struct stat *st, const struct dirent *dir_entry)
 
     struct tm *t = gmtime(&st->st_mtime);
 
-    // snprintf(buf, 4096, "%s\t%d\t%s\t%s\t%lu\t%04d-%02u-%02u %02u:%02u\t%s",
-    snprintf(buf, 4096, "%s %d %s %s %lu %04d-%02u-%02u %02u:%02u %s",
+    // snprintf(str, 1024, "%s\t%d\t%s\t%s\t%lu\t%04d-%02u-%02u %02u:%02u\t%s",
+    snprintf(str, 1024, "%s %d %s %s %lu %04d-%02u-%02u %02u:%02u %s",
         mode_str, num_links, usr->pw_name, grp->gr_name, (unsigned long)sz,
         1900 + t->tm_year, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min,
         dir_entry->d_name
     );
 
-    return buf;
+    return str;
 }
 
 static void sftp_readdir(void)
@@ -923,9 +921,9 @@ static void sftp_readdir(void)
             {
                 put_cstring(p_entry->d_name);
                 // make longname here
-                char *longname = get_longname(&st, p_entry);
+                char longname[1024] = { '\0' };
+                get_longname(longname, &st, p_entry);
                 put_cstring(longname);
-                free(longname);
                 stat_to_attr(&st, &attr);
                 put_attrs(&attr);
                 count++;
