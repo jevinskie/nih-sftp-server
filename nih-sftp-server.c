@@ -877,7 +877,7 @@ static char *get_longname(const struct stat *st, const struct dirent *dir_entry,
 
     snprintf(buf, 4096, "%s\t%d\t%s\t%s\t%lu\t%04d-%02u-%02u %02u:%02u:%02u\t%s",
         mode_str, num_links, usr->pw_name, grp->gr_name, (unsigned long)sz,
-        1900 + t->tm_year, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t-> tm_sec,
+        1900 + t->tm_year, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
         dir_entry->d_name);
 
     fprintf(stderr, "p: %p buf: %p buf: '%s'\n", (void *)p, (void *)buf, buf);
