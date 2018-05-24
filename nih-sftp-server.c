@@ -63,6 +63,9 @@ _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 #include <sys/time.h> /* utimes, futimes */
 #include <sys/stat.h> /* f/l/stat/at, chmod */
 #include <dirent.h> /* DIR*, readdir and friends */
+#include <pwd.h> /* getpwuid */
+#include <grp.h> /* getgrgid */
+#include <time.h>
 
 #include "nih-sftp-server.h"
 
@@ -855,9 +858,27 @@ static char *get_longname(const struct stat *st, const struct dirent *dir_entry,
     (void)p_handle;
     char *buf = calloc(1, 4096);
     char *p = buf;
-    char *mode_ptr = buf;
+    
+    char mode_str[11] = { '\0' };
+    my_strmode(st->st_mode, mode_str);
 
-    my_strmode(st->st_mode, mode_ptr);
+    nlink_t num_links = st->st_nlink;
+
+    uid_t uid = st->st_uid;
+    struct passwd *usr = getpwuid(uid);
+
+    gid_t gid = st->st_gid;
+    struct group *grp = getgrgid(gid);
+
+    off_t sz = st->st_size;
+
+    struct tm *t = gmtime(&st->st_mtime);
+
+
+    snprintf(buf, 4096, "%s\t%d\t%s\t%s\t%lu\t%04d-%02u-%02u %02u:%02u:%02u\t%s",
+        mode_str, num_links, usr->pw_name, grp->gr_name, (unsigned long)sz,
+        1900 + t->tm_year, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t-> tm_sec,
+        dir_entry->d_name);
 
     fprintf(stderr, "p: %p buf: %p buf: '%s'\n", (void *)p, (void *)buf, buf);
 
