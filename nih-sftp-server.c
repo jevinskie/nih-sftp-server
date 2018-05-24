@@ -64,6 +64,8 @@ _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 #include <sys/stat.h> /* f/l/stat/at, chmod */
 #include <dirent.h> /* DIR*, readdir and friends */
 
+#include "nih-sftp-server.h"
+
 /* draft-ietf-secsh-filexfer-02 */
 #define SSH_FXP_INIT                1
 #define SSH_FXP_VERSION             2
@@ -846,6 +848,22 @@ static void sftp_opendir(void)
     put_status(id, status);
 }
 
+static char *get_longname(const struct stat *st, const struct dirent *dir_entry, const fxp_handle_t *p_handle)
+{
+    (void)st;
+    (void)dir_entry;
+    (void)p_handle;
+    char *buf = calloc(1, 4096);
+    char *p = buf;
+    char *mode_ptr = buf;
+
+    my_strmode(st->st_mode, mode_ptr);
+
+    fprintf(stderr, "p: %p buf: %p buf: '%s'\n", (void *)p, (void *)buf, buf);
+
+    return buf;
+}
+
 static void sftp_readdir(void)
 {
     buff_save_t save1,save2;
@@ -883,10 +901,14 @@ static void sftp_readdir(void)
                 continue;
             }
             /* If the entry will fit in the buffer */
+            // FIXME ^^^ this comment is now a lie
             if (((strlen(p_entry->d_name) + sizeof(uint32_t)) * 2 + MAX_ATTRS_BYTES) <= obuff.count)
             {
                 put_cstring(p_entry->d_name);
-                put_cstring(p_entry->d_name);
+                // make longname here
+                char *longname = get_longname(&st, p_entry, p_handle);
+                put_cstring(longname);
+                free(longname);
                 stat_to_attr(&st, &attr);
                 put_attrs(&attr);
                 count++;
