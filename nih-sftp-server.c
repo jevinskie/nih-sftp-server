@@ -855,7 +855,7 @@ static void sftp_opendir(void)
 static char *get_longname(char *str, const struct stat *st, const struct dirent *dir_entry)
 {    
     char mode_str[11] = { '\0' };
-    my_strmode(st->st_mode, mode_str);
+    jev_strmode(st->st_mode, mode_str);
 
     nlink_t num_links = st->st_nlink;
 

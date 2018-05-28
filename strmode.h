@@ -3,6 +3,6 @@
 
 #include <sys/stat.h>
 
-char *my_strmode(mode_t mode, char *p);
+char *jev_strmode(mode_t mode, char *p);
 
 #endif // _STRMODE_H_

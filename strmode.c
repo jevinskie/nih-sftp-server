@@ -30,8 +30,8 @@
 
 /* OPENBSD ORIGINAL: lib/libc/string/strmode.c */
 
-#ifndef HAVE_MY_STRMODE
-#define HAVE_MY_STRMODE
+#ifndef HAVE_JEV_STRMODE
+#define HAVE_JEV_STRMODE
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,7 +39,7 @@
 
 /* XXX mode should be mode_t */
 
-char *my_strmode(mode_t mode, char *p)
+char *jev_strmode(mode_t mode, char *p)
 {
 	 /* print type */
 	switch (mode & S_IFMT) {
@@ -145,4 +145,4 @@ char *my_strmode(mode_t mode, char *p)
 	return p;
 }
 
-#endif // HAVE_STRMODE
+#endif // HAVE_JEV_STRMODE
