@@ -123,7 +123,7 @@ _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 #define SSH_FXF_EXCL            0x00000020
 
 /* Derived from SFTP specification */
-#define MAX_ATTRS_BYTES 1024
+#define MAX_ATTRS_BYTES 32
 #define SFTP_PROTOCOL_VERSION 3
 
 /* Defaults */
@@ -131,14 +131,15 @@ _BSD_SOURCE for futimes; otherwise sftp_fsetstat() will return unsupported
 #define DEFAULT_DIR_PERM 0777
 
 /* Implementation limits */
-#define MAX_PACKET 34000    /* SFTP: All servers SHOULD support packets of at least 34000 bytes */
+#define MAX_PACKET 340000    /* SFTP: All servers SHOULD support packets of at least 340000 bytes?? */
 #define PERM_MASK 0777
 /* Handles are represented as SSH strings; MAX_HANDLE_DIGITS must enable the printing of
 MAX_HANDLES in that many digits */
-#define MAX_HANDLES 99999
-#define MAX_HANDLE_DIGITS 5
+#define MAX_HANDLES 99
+#define MAX_HANDLE_DIGITS 2
 
 #define MAX_LONGNAME_LEN 4096
+#define MAX_USR_GRP_LEN 4096
 
 /* Utility macros */
 #define STR(x) #x
@@ -855,7 +856,7 @@ static void sftp_opendir(void)
 }
 
 static char *get_longname(char *str, const struct stat *st, const struct dirent *dir_entry)
-{    
+{
     char mode_str[11] = { '\0' };
     jev_strmode(st->st_mode, mode_str);
 
@@ -863,20 +864,24 @@ static char *get_longname(char *str, const struct stat *st, const struct dirent 
 
     uid_t uid = st->st_uid;
     struct passwd passwd_st;
-    size_t passwd_buf_max_sz = sysconf(_SC_GETPW_R_SIZE_MAX);
-    char *passwd_buf = malloc(passwd_buf_max_sz);
-    assert(passwd_buf);
+    //size_t passwd_buf_max_sz = sysconf(_SC_GETPW_R_SIZE_MAX);
+    //char *passwd_buf = malloc(passwd_buf_max_sz);
+    //assert(passwd_buf);
+    char passwd_buf[MAX_USR_GRP_LEN];
     struct passwd *passwd_st_res;
-    assert(!getpwuid_r(uid, &passwd_st, passwd_buf, passwd_buf_max_sz, &passwd_st_res));
+    //assert(!getpwuid_r(uid, &passwd_st, passwd_buf, passwd_buf_max_sz, &passwd_st_res));
+    assert(!getpwuid_r(uid, &passwd_st, passwd_buf, sizeof(passwd_buf), &passwd_st_res));
     assert(passwd_st_res);
 
     gid_t gid = st->st_gid;
     struct group group_st;
-    size_t group_buf_max_sz = sysconf(_SC_GETGR_R_SIZE_MAX);
-    char *group_buf = malloc(group_buf_max_sz);
-    assert(group_buf);
+    //size_t group_buf_max_sz = sysconf(_SC_GETGR_R_SIZE_MAX);
+    //char *group_buf = malloc(group_buf_max_sz);
+    //assert(group_buf);
+    char group_buf[MAX_USR_GRP_LEN];
     struct group *group_st_res;
-    assert(!getgrgid_r(gid, &group_st, group_buf, group_buf_max_sz, &group_st_res));
+    //assert(!getgrgid_r(gid, &group_st, group_buf, group_buf_max_sz, &group_st_res));
+    assert(!getgrgid_r(gid, &group_st, group_buf, sizeof(group_buf), &group_st_res));
     assert(group_st_res);
 
     off_t sz = st->st_size;
@@ -892,8 +897,8 @@ static char *get_longname(char *str, const struct stat *st, const struct dirent 
         dir_entry->d_name
     );
 
-    free(passwd_buf);
-    free(group_buf);
+    //free(passwd_buf);
+    //free(group_buf);
 
     return str;
 }
@@ -905,6 +910,7 @@ static void sftp_readdir(void)
     struct dirent *p_entry;
     uint32_t id = get_uint32();
     fxp_handle_t *p_handle = get_handle();
+    char longname[MAX_LONGNAME_LEN];
 
     if (!p_handle)
     {
@@ -934,14 +940,14 @@ static void sftp_readdir(void)
             {
                 continue;
             }
+
+            // make longname here
+            get_longname(longname, &st, p_entry);
+
             /* If the entry will fit in the buffer */
-            // FIXME ^^^ this comment is now a lie
-            if (((strlen(p_entry->d_name) + sizeof(uint32_t)) * 2 + MAX_ATTRS_BYTES) <= obuff.count)
+            if (((strlen(p_entry->d_name) + strlen(longname) + 2 * sizeof(uint32_t)) + MAX_ATTRS_BYTES) <= obuff.count)
             {
                 put_cstring(p_entry->d_name);
-                // make longname here
-                char longname[MAX_LONGNAME_LEN] = { '\0' };
-                get_longname(longname, &st, p_entry);
                 put_cstring(longname);
                 stat_to_attr(&st, &attr);
                 put_attrs(&attr);
