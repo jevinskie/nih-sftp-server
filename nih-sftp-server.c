@@ -138,6 +138,8 @@ MAX_HANDLES in that many digits */
 #define MAX_HANDLES 99999
 #define MAX_HANDLE_DIGITS 5
 
+#define MAX_LONGNAME_LEN 4096
+
 /* Utility macros */
 #define STR(x) #x
 #define STREXPAND(x) STR(x)
@@ -860,21 +862,38 @@ static char *get_longname(char *str, const struct stat *st, const struct dirent 
     nlink_t num_links = st->st_nlink;
 
     uid_t uid = st->st_uid;
-    struct passwd *usr = getpwuid(uid);
+    struct passwd passwd_st;
+    size_t passwd_buf_max_sz = sysconf(_SC_GETPW_R_SIZE_MAX);
+    char *passwd_buf = malloc(passwd_buf_max_sz);
+    assert(passwd_buf);
+    struct passwd *passwd_st_res;
+    assert(!getpwuid_r(uid, &passwd_st, passwd_buf, passwd_buf_max_sz, &passwd_st_res));
+    assert(passwd_st_res);
 
     gid_t gid = st->st_gid;
-    struct group *grp = getgrgid(gid);
+    struct group group_st;
+    size_t group_buf_max_sz = sysconf(_SC_GETGR_R_SIZE_MAX);
+    char *group_buf = malloc(group_buf_max_sz);
+    assert(group_buf);
+    struct group *group_st_res;
+    assert(!getgrgid_r(gid, &group_st, group_buf, group_buf_max_sz, &group_st_res));
+    assert(group_st_res);
 
     off_t sz = st->st_size;
 
-    struct tm *t = gmtime(&st->st_mtime);
+    struct tm t_st;
+    struct tm *t = gmtime_r(&st->st_mtime, &t_st);
+    assert(t);
 
-    // snprintf(str, 1024, "%s\t%d\t%s\t%s\t%lu\t%04d-%02u-%02u %02u:%02u\t%s",
-    snprintf(str, 1024, "%s %d %s %s %lu %04d-%02u-%02u %02u:%02u %s",
-        mode_str, num_links, usr->pw_name, grp->gr_name, (unsigned long)sz,
+    // snprintf(str, MAX_LONGNAME_LEN, "%s\t%d\t%s\t%s\t%lu\t%04d-%02u-%02u %02u:%02u\t%s",
+    snprintf(str, MAX_LONGNAME_LEN, "%s %d %s %s %lu %04d-%02u-%02u %02u:%02u %s",
+        mode_str, num_links, passwd_st_res->pw_name, group_st_res->gr_name, (unsigned long)sz,
         1900 + t->tm_year, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min,
         dir_entry->d_name
     );
+
+    free(passwd_buf);
+    free(group_buf);
 
     return str;
 }
@@ -921,7 +940,7 @@ static void sftp_readdir(void)
             {
                 put_cstring(p_entry->d_name);
                 // make longname here
-                char longname[1024] = { '\0' };
+                char longname[MAX_LONGNAME_LEN] = { '\0' };
                 get_longname(longname, &st, p_entry);
                 put_cstring(longname);
                 stat_to_attr(&st, &attr);
