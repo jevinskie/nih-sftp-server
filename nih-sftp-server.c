@@ -263,8 +263,11 @@ static buff_t ibuff, obuff;
 static ssh_bool_t have_init = SSH_FALSE;
 static fxp_handle_t handles[MAX_HANDLES];
 
-
-int main(int argc, char **argv)
+#ifdef DBMULTI_sftpserver
+int sftp_server_main(int argc, const char **argv)
+#else
+int main(int argc, const char **argv)
+#endif
 {
     (void)argc; /* Unused */
     (void)argv; /* Unused */
