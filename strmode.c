@@ -145,4 +145,41 @@ char *jev_strmode(mode_t mode, char *p)
 	return p;
 }
 
+#if defined(__ANDROID__) && __ANDROID_API__ < 23
+
+#include <assert.h>
+#include <dirent.h>
+#include <stdio.h>
+
+struct DIR {
+  int fd_;
+  size_t available_bytes_;
+  struct dirent* next_;
+  pthread_mutex_t mutex_;
+  struct dirent buff_[15];
+  long current_pos_;
+};
+
+#define CHECK_DIR(d) assert(d != NULL)
+
+void seekdir(DIR* d, long offset) {
+	CHECK_DIR(d);
+
+	pthread_mutex_lock(d->mutex_);
+	off_t ret = lseek(d->fd_, offset, SEEK_SET);
+	if (ret != -1L) {
+		d->available_bytes_ = 0;
+		d->current_pos_ = ret;
+	}
+	pthread_mutex_unlock(d->mutex_);
+}
+
+long telldir(DIR* d) {
+	CHECK_DIR(d);
+
+	return d->current_pos_;
+}
+
+#endif
+
 #endif // HAVE_JEV_STRMODE

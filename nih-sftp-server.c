@@ -866,25 +866,27 @@ static char *get_longname(char *str, const struct stat *st, const struct dirent 
     nlink_t num_links = st->st_nlink;
 
     uid_t uid = st->st_uid;
-    struct passwd passwd_st;
+    //struct passwd passwd_st;
     //size_t passwd_buf_max_sz = sysconf(_SC_GETPW_R_SIZE_MAX);
     //char *passwd_buf = malloc(passwd_buf_max_sz);
     //assert(passwd_buf);
-    char passwd_buf[MAX_USR_GRP_LEN];
+    //char passwd_buf[MAX_USR_GRP_LEN];
     struct passwd *passwd_st_res;
     //assert(!getpwuid_r(uid, &passwd_st, passwd_buf, passwd_buf_max_sz, &passwd_st_res));
-    assert(!getpwuid_r(uid, &passwd_st, passwd_buf, sizeof(passwd_buf), &passwd_st_res));
+    //assert(!getpwuid_r(uid, &passwd_st, passwd_buf, sizeof(passwd_buf), &passwd_st_res));
+    passwd_st_res = getpwuid(uid);
     assert(passwd_st_res);
 
     gid_t gid = st->st_gid;
-    struct group group_st;
+    //struct group group_st;
     //size_t group_buf_max_sz = sysconf(_SC_GETGR_R_SIZE_MAX);
     //char *group_buf = malloc(group_buf_max_sz);
     //assert(group_buf);
-    char group_buf[MAX_USR_GRP_LEN];
+    //char group_buf[MAX_USR_GRP_LEN];
     struct group *group_st_res;
     //assert(!getgrgid_r(gid, &group_st, group_buf, group_buf_max_sz, &group_st_res));
-    assert(!getgrgid_r(gid, &group_st, group_buf, sizeof(group_buf), &group_st_res));
+    //assert(!getgrgid_r(gid, &group_st, group_buf, sizeof(group_buf), &group_st_res));
+    group_st_res = getgrgid(gid);
     assert(group_st_res);
 
     off_t sz = st->st_size;
