@@ -1041,7 +1041,7 @@ static void sftp_rmdir(void)
 
 static void sftp_realpath(void)
 {
-#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L
+#if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L) || defined(__ANDROID__)
     uint32_t id = get_uint32();
     const char *sz_path = get_string(NULL);
     char *sz_fullname;
